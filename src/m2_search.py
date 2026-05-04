@@ -107,7 +107,12 @@ class DenseSearch:
         """Search using dense vectors."""
         query_vector = self._get_encoder().encode([query])[0]
         query_vector = query_vector.tolist() if hasattr(query_vector, "tolist") else list(query_vector)
-        hits = self.client.search(collection, query_vector, limit=top_k)
+        response = self.client.query_points(
+            collection_name=collection,
+            query=query_vector,
+            limit=top_k
+        )
+        hits = response.points
         results = []
         for hit in hits:
             payload = hit.payload or {}
