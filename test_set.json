@@ -1,3 +1,22 @@
 [
-  {"question": "hihi cả nhà tự tạo testset bằng cơm nhé", "ground_truth": "Không kịp tạo luôn"},
+  {"question": "Công ty nào nộp tờ khai thuế GTGT trong tài liệu này?", "ground_truth": "Công ty Cổ phần DHA Surfaces"},
+  {"question": "Mã số thuế của công ty DHA Surfaces là gì?", "ground_truth": "0106769437"},
+  {"question": "Tờ khai thuế GTGT này áp dụng cho kỳ tính thuế nào?", "ground_truth": "Quý 4 năm 2024"},
+  {"question": "Thuế GTGT còn được khấu trừ từ kỳ trước chuyển sang là bao nhiêu?", "ground_truth": "77.377.803 đồng"},
+  {"question": "Tổng thuế GTGT của hàng hóa, dịch vụ mua vào trong kỳ là bao nhiêu?", "ground_truth": "215.163.767 đồng"},
+  {"question": "Doanh thu hàng hóa, dịch vụ bán ra chịu thuế suất 10% là bao nhiêu?", "ground_truth": "3.703.685.610 đồng"},
+  {"question": "Thuế GTGT phải nộp trong kỳ của DHA Surfaces là bao nhiêu?", "ground_truth": "52.133.830 đồng"},
+  {"question": "Người ký tờ khai thuế GTGT của DHA Surfaces là ai?", "ground_truth": "Trịnh Thị Sang"},
+  {"question": "Nghị định 13/2023/NĐ-CP được ban hành ngày nào?", "ground_truth": "Ngày 17 tháng 4 năm 2023"},
+  {"question": "Nghị định 13/2023/NĐ-CP có hiệu lực thi hành từ ngày nào?", "ground_truth": "Ngày 01 tháng 7 năm 2023"},
+  {"question": "Dữ liệu cá nhân nhạy cảm là gì theo Nghị định 13/2023?", "ground_truth": "Là dữ liệu cá nhân gắn liền với quyền riêng tư của cá nhân mà khi bị xâm phạm sẽ gây ảnh hưởng trực tiếp tới quyền và lợi ích hợp pháp của cá nhân, bao gồm quan điểm chính trị, tôn giáo, sức khỏe, đời tư, nguồn gốc chủng tộc, đặc điểm di truyền, sinh học, đời sống tình dục, dữ liệu tội phạm, thông tin tài khoản ngân hàng, dữ liệu vị trí và các dữ liệu đặc thù khác theo pháp luật"},
+  {"question": "Chủ thể dữ liệu có những quyền gì theo Điều 9 Nghị định 13/2023?", "ground_truth": "Quyền được biết, quyền đồng ý, quyền truy cập, quyền rút lại sự đồng ý, quyền xóa dữ liệu, quyền hạn chế xử lý dữ liệu, quyền cung cấp dữ liệu, quyền phản đối xử lý dữ liệu, quyền khiếu nại tố cáo khởi kiện, quyền yêu cầu bồi thường thiệt hại, quyền tự bảo vệ"},
+  {"question": "Sự đồng ý của chủ thể dữ liệu có hiệu lực khi nào?", "ground_truth": "Khi chủ thể dữ liệu tự nguyện và biết rõ loại dữ liệu được xử lý, mục đích xử lý, tổ chức/cá nhân được xử lý, và các quyền nghĩa vụ của chủ thể dữ liệu"},
+  {"question": "Sự im lặng của chủ thể dữ liệu có được coi là sự đồng ý không?", "ground_truth": "Không, sự im lặng hoặc không phản hồi của chủ thể dữ liệu không được coi là sự đồng ý"},
+  {"question": "Bên Kiểm soát dữ liệu cá nhân phải thông báo vi phạm cho Bộ Công an trong bao lâu?", "ground_truth": "Chậm nhất 72 giờ sau khi xảy ra hành vi vi phạm"},
+  {"question": "Cơ quan chuyên trách bảo vệ dữ liệu cá nhân là cơ quan nào?", "ground_truth": "Cục An ninh mạng và phòng, chống tội phạm sử dụng công nghệ cao - Bộ Công an"},
+  {"question": "Việc xóa dữ liệu cá nhân phải được thực hiện trong bao lâu sau khi có yêu cầu?", "ground_truth": "Trong 72 giờ sau khi có yêu cầu của chủ thể dữ liệu"},
+  {"question": "Doanh nghiệp siêu nhỏ, nhỏ và vừa được miễn trừ quy định nào trong 2 năm đầu thành lập?", "ground_truth": "Được quyền lựa chọn miễn trừ quy định về chỉ định cá nhân và bộ phận bảo vệ dữ liệu cá nhân trong thời gian 02 năm đầu kể từ khi thành lập"},
+  {"question": "Hồ sơ đánh giá tác động xử lý dữ liệu cá nhân phải gửi Bộ Công an trong bao lâu?", "ground_truth": "Trong thời gian 60 ngày kể từ ngày tiến hành xử lý dữ liệu cá nhân"},
+  {"question": "Thuế GTGT phát sinh trong kỳ của DHA Surfaces được tính như thế nào?", "ground_truth": "Bằng thuế GTGT đầu ra trừ thuế GTGT đầu vào được khấu trừ: 344.675.400 - 215.163.767 = 129.511.633 đồng"}
 ]
