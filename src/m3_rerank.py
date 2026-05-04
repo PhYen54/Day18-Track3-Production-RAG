@@ -2,6 +2,7 @@
 
 import os, sys, time
 from dataclasses import dataclass
+from openai import OpenAI
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import RERANK_TOP_K
@@ -17,44 +18,98 @@ class RerankResult:
 
 
 class CrossEncoderReranker:
-    def __init__(self, model_name: str = "BAAI/bge-reranker-v2-m3"):
+    def __init__(self, model_name: str = "gpt-4o-mini", api_key: str = None):
         self.model_name = model_name
-        self._model = None
+        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
 
     def _load_model(self):
-        if self._model is None:
-            # TODO: Load cross-encoder model
-            # Option A: from FlagEmbedding import FlagReranker
-            #           self._model = FlagReranker(self.model_name, use_fp16=True)
-            # Option B: from sentence_transformers import CrossEncoder
-            #           self._model = CrossEncoder(self.model_name)
-            pass
-        return self._model
+        # For OpenAI, client is already initialized in __init__
+        return self.client
 
     def rerank(self, query: str, documents: list[dict], top_k: int = RERANK_TOP_K) -> list[RerankResult]:
-        """Rerank documents: top-20 → top-k."""
-        # TODO: Implement reranking
-        # 1. model = self._load_model()
-        # 2. pairs = [(query, doc["text"]) for doc in documents]
-        # 3. scores = model.compute_score(pairs)  # FlagReranker
-        #    OR scores = model.predict(pairs)      # CrossEncoder
-        # 4. Combine: [(score, doc) for score, doc in zip(scores, documents)]
-        # 5. Sort by score descending
-        # 6. Return top_k RerankResult(text=..., original_score=doc["score"],
-        #                              rerank_score=score, metadata=doc["metadata"], rank=i)
-        return []
+        # TODO 2: CrossEncoderReranker.rerank() — use OpenAI to score documents
+        client = self._load_model()
+        
+        # Score each document using OpenAI
+        scored_docs = []
+        for doc in documents:
+            prompt = f"""Rate the relevance of the following document to the query on a scale of 0 to 10.
+Query: {query}
+Document: {doc["text"]}
+Respond with only a number (0-10)."""
+            
+            response = client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0
+            )
+            
+            try:
+                score = float(response.choices[0].message.content.strip())
+            except (ValueError, IndexError):
+                score = 0.0
+            
+            scored_docs.append((score, doc))
+        
+        # Sort by score descending
+        scored_docs.sort(key=lambda x: x[0], reverse=True)
+        
+        # Return top-k results
+        results = []
+        for i, (score, doc) in enumerate(scored_docs[:top_k]):
+            results.append(RerankResult(
+                text=doc["text"],
+                original_score=doc["score"],
+                rerank_score=score,
+                metadata=doc["metadata"],
+                rank=i+1
+            ))
+        return results
 
 
 class FlashrankReranker:
-    """Lightweight alternative (<5ms). Optional."""
-    def __init__(self):
-        self._model = None
+    """Lightweight alternative using OpenAI's faster model."""
+    def __init__(self, model_name: str = "gpt-4o-mini", api_key: str = None):
+        self.model_name = model_name
+        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
 
     def rerank(self, query: str, documents: list[dict], top_k: int = RERANK_TOP_K) -> list[RerankResult]:
-        # TODO (optional): from flashrank import Ranker, RerankRequest
-        # model = Ranker(); passages = [{"text": d["text"]} for d in documents]
-        # results = model.rerank(RerankRequest(query=query, passages=passages))
-        return []
+        # TODO (optional): Use lightweight OpenAI model for faster reranking
+        try:
+            scored_docs = []
+            for doc in documents:
+                prompt = f"""Rate relevance (0-10):
+Query: {query}
+Doc: {doc["text"]}
+Answer: number only"""
+                
+                response = self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0
+                )
+                
+                try:
+                    score = float(response.choices[0].message.content.strip())
+                except (ValueError, IndexError):
+                    score = 0.0
+                
+                scored_docs.append((score, doc))
+            
+            scored_docs.sort(key=lambda x: x[0], reverse=True)
+            
+            results = []
+            for i, (score, doc) in enumerate(scored_docs[:top_k]):
+                results.append(RerankResult(
+                    text=doc["text"],
+                    original_score=doc["score"],
+                    rerank_score=score,
+                    metadata=doc["metadata"],
+                    rank=i+1
+                ))
+            return results
+        except Exception:
+            return []
 
 
 def benchmark_reranker(reranker, query: str, documents: list[dict], n_runs: int = 5) -> dict:
@@ -66,7 +121,17 @@ def benchmark_reranker(reranker, query: str, documents: list[dict], n_runs: int 
     #      reranker.rerank(query, documents)
     #      times.append((time.perf_counter() - start) * 1000)  # ms
     # 3. return {"avg_ms": mean(times), "min_ms": min(times), "max_ms": max(times)}
-    return {"avg_ms": 0, "min_ms": 0, "max_ms": 0}
+    times = []
+    for _ in range(n_runs):
+        start = time.perf_counter()
+        reranker.rerank(query, documents)
+        end = time.perf_counter()
+        times.append((end - start) * 1000)  # ms
+    return {
+        "avg_ms": sum(times) / len(times),
+        "min_ms": min(times),
+        "max_ms": max(times)
+    }
 
 
 if __name__ == "__main__":
