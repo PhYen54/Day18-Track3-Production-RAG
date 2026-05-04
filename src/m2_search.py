@@ -1,6 +1,6 @@
 """Module 2: Hybrid Search — BM25 (Vietnamese) + Dense + RRF."""
 
-import os, sys, re
+import os, sys, re, uuid
 from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,7 +20,6 @@ def segment_vietnamese(text: str) -> str:
     """Segment Vietnamese text into words."""
     try:
         from underthesea import word_tokenize
-
         return word_tokenize(text, format="text")
     except Exception:
         return re.sub(r"\s+", " ", text).strip()
@@ -43,7 +42,6 @@ class BM25Search:
 
         try:
             from rank_bm25 import BM25Okapi
-
             self.bm25 = BM25Okapi(self.corpus_tokens)
         except Exception:
             self.bm25 = None
@@ -74,7 +72,11 @@ class BM25Search:
 class DenseSearch:
     def __init__(self):
         from qdrant_client import QdrantClient
-        self.client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+        
+        # BỎ QUA config.py, ép dùng URL trực tiếp để chắc chắn kết nối tới đúng cổng của Docker Desktop
+        print("Đang kết nối tới Qdrant tại http://localhost:6333 ...")
+        self.client = QdrantClient(url="http://localhost:6333")
+        
         self._encoder = None
 
     def _get_encoder(self):
@@ -83,35 +85,50 @@ class DenseSearch:
             self._encoder = SentenceTransformer(EMBEDDING_MODEL)
         return self._encoder
 
-    def index(self, chunks: list[dict], collection: str = COLLECTION_NAME) -> None:
-        """Index chunks into Qdrant."""
+    def index(self, chunks: list[dict], collection: str = COLLECTION_NAME, batch_size: int = 100) -> None:
+        """Index chunks into Qdrant safely with UUIDs and Batching."""
         if not chunks:
             return
 
         from qdrant_client.models import Distance, VectorParams, PointStruct
 
-        self.client.recreate_collection(
-            collection,
-            VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
-        )
+        # TỐI ƯU 1: Chỉ tạo Collection nếu chưa tồn tại, KHÔNG xóa đè collection cũ
+        if not self.client.collection_exists(collection):
+            self.client.create_collection(
+                collection_name=collection,
+                vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
+            )
+
         texts = [c.get("text", "") for c in chunks]
         vectors = self._get_encoder().encode(texts, show_progress_bar=True)
+        
         points = []
-        for i, (chunk, vec) in enumerate(zip(chunks, vectors)):
+        for chunk, vec in zip(chunks, vectors):
             vector = vec.tolist() if hasattr(vec, "tolist") else list(vec)
             payload = {**chunk.get("metadata", {}), "text": chunk.get("text", "")}
-            points.append(PointStruct(id=i, vector=vector, payload=payload))
-        self.client.upsert(collection, points)
+            
+            # TỐI ƯU 2: Tạo UUID dựa trên nội dung text. Nếu chạy script 2 lần, nó sẽ không tạo ra 2 vector trùng lặp.
+            point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk.get("text", "")))
+            points.append(PointStruct(id=point_id, vector=vector, payload=payload))
+
+        # TỐI ƯU 3: Đẩy dữ liệu lên Qdrant theo từng Batch nhỏ để tránh lỗi Timeout hoặc Out-Of-Memory
+        for i in range(0, len(points), batch_size):
+            self.client.upsert(
+                collection_name=collection, 
+                points=points[i : i + batch_size]
+            )
 
     def search(self, query: str, top_k: int = DENSE_TOP_K, collection: str = COLLECTION_NAME) -> list[SearchResult]:
         """Search using dense vectors."""
         query_vector = self._get_encoder().encode([query])[0]
         query_vector = query_vector.tolist() if hasattr(query_vector, "tolist") else list(query_vector)
+        
         response = self.client.query_points(
             collection_name=collection,
             query=query_vector,
             limit=top_k
         )
+        
         hits = response.points
         results = []
         for hit in hits:
@@ -150,7 +167,7 @@ def reciprocal_rank_fusion(results_list: list[list[SearchResult]], k: int = 60,
 
 
 class HybridSearch:
-    """Combines BM25 + Dense + RRF. (Đã implement sẵn — dùng classes ở trên)"""
+    """Combines BM25 + Dense + RRF."""
     def __init__(self):
         self.bm25 = BM25Search()
         self.dense = DenseSearch()
