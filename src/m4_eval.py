@@ -1,6 +1,6 @@
 """Module 4: RAGAS Evaluation — 4 metrics + failure analysis."""
 
-import os, sys, json
+import os, sys, json, re
 from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -34,12 +34,23 @@ def evaluate_ragas(questions: list[str], answers: list[str],
     context_precision_scores: list[float] = []
     context_recall_scores: list[float] = []
 
+    def tokenize(text: str) -> set[str]:
+        return {t for t in re.findall(r"\w+", text.lower()) if t}
+
+    def overlap_ratio(source: str, target: str) -> float:
+        source_tokens = tokenize(source)
+        target_tokens = tokenize(target)
+        if not source_tokens or not target_tokens:
+            return 0.0
+        return len(source_tokens & target_tokens) / len(source_tokens)
+
     for question, answer, context_list, ground_truth in zip(questions, answers, contexts, ground_truths):
-        # Simple proxy metrics when the RAGAS library is unavailable.
-        faithfulness = 1.0 if ground_truth and ground_truth in answer else 0.0
-        answer_relevancy = 1.0 if answer and question.lower() in answer.lower() else 0.0
+        # Proxy metrics with token overlap (less brittle than exact string match).
+        combined_context = "\n".join(context_list)
+        faithfulness = overlap_ratio(ground_truth, answer) if ground_truth else 0.0
+        answer_relevancy = overlap_ratio(question, answer) if answer else 0.0
         context_precision = 1.0 if context_list else 0.0
-        context_recall = 1.0 if ground_truth and any(ground_truth in c for c in context_list) else 0.0
+        context_recall = overlap_ratio(ground_truth, combined_context) if ground_truth else 0.0
 
         faithfulness_scores.append(faithfulness)
         answer_relevancy_scores.append(answer_relevancy)

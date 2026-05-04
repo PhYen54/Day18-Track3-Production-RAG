@@ -98,6 +98,11 @@ def build_rag_pipeline():
     return search, reranker
 
 
+def build_pipeline():
+    """Backward-compatible entry point used by main.py."""
+    return build_rag_pipeline()
+
+
 def run_query(query: str, search: HybridSearch, reranker: CrossEncoderReranker) -> tuple[str, list[str]]:
     """Run single query through pipeline."""
     results = search.search(query)
@@ -105,16 +110,24 @@ def run_query(query: str, search: HybridSearch, reranker: CrossEncoderReranker) 
     reranked = reranker.rerank(query, docs, top_k=RERANK_TOP_K)
     contexts = [r.text for r in reranked] if reranked else [r.text for r in results[:3]]
 
-    # TODO (nhóm): Replace with LLM generation for better scores
-    from openai import OpenAI
-    client = OpenAI()
-    context_str = "\n\n".join(contexts)
-    resp = client.chat.completions.create(model="gpt-4o-mini", messages=[
-        {"role": "system", "content": "Trả lời CHỈ dựa trên context. Nếu không có → nói 'Không tìm thấy.'"},
-        {"role": "user", "content": f"Context:\n{context_str}\n\nCâu hỏi: {query}"},
-    ])
-    answer = resp.choices[0].message.content
-    answer = contexts[0] if contexts else "Không tìm thấy thông tin."
+    # Generate answer with LLM; fallback to top context if LLM fails.
+    try:
+        from openai import OpenAI
+        client = OpenAI()
+        context_str = "\n\n".join(contexts)
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Trả lời CHỈ dựa trên context. Nếu không có → nói 'Không tìm thấy.'"},
+                {"role": "user", "content": f"Context:\n{context_str}\n\nCâu hỏi: {query}"},
+            ],
+        )
+        answer = resp.choices[0].message.content.strip()
+    except Exception:
+        answer = ""
+
+    if not answer:
+        answer = contexts[0] if contexts else "Không tìm thấy thông tin."
     return answer, contexts
 
 

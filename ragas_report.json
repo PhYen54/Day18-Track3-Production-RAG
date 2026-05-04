@@ -1,35 +1,21 @@
 {
   "aggregate": {
-    "faithfulness": 0.1,
-    "answer_relevancy": 0.0,
+    "faithfulness": 0.6753333333333333,
+    "answer_relevancy": 0.6921230231756548,
     "context_precision": 1.0,
-    "context_recall": 0.1
+    "context_recall": 0.8402105263157896
   },
   "num_questions": 20,
   "failures": [
     {
-      "question": "Công ty nào nộp tờ khai thuế GTGT trong tài liệu này?",
+      "question": "Chủ thể dữ liệu có những quyền gì theo Điều 9 Nghị định 13/2023?",
       "worst_metric": "faithfulness",
       "score": 0.0,
       "diagnosis": "LLM hallucinating",
       "suggested_fix": "Tighten prompt, lower temperature"
     },
     {
-      "question": "Thuế GTGT còn được khấu trừ từ kỳ trước chuyển sang là bao nhiêu?",
-      "worst_metric": "faithfulness",
-      "score": 0.0,
-      "diagnosis": "LLM hallucinating",
-      "suggested_fix": "Tighten prompt, lower temperature"
-    },
-    {
-      "question": "Tổng thuế GTGT của hàng hóa, dịch vụ mua vào trong kỳ là bao nhiêu?",
-      "worst_metric": "faithfulness",
-      "score": 0.0,
-      "diagnosis": "LLM hallucinating",
-      "suggested_fix": "Tighten prompt, lower temperature"
-    },
-    {
-      "question": "Doanh thu hàng hóa, dịch vụ bán ra chịu thuế suất 10% là bao nhiêu?",
+      "question": "Thuế GTGT phát sinh trong kỳ của DHA Surfaces được tính như thế nào?",
       "worst_metric": "faithfulness",
       "score": 0.0,
       "diagnosis": "LLM hallucinating",
@@ -50,30 +36,44 @@
       "suggested_fix": "Tighten prompt, lower temperature"
     },
     {
-      "question": "Nghị định 13/2023/NĐ-CP được ban hành ngày nào?",
-      "worst_metric": "faithfulness",
-      "score": 0.0,
-      "diagnosis": "LLM hallucinating",
-      "suggested_fix": "Tighten prompt, lower temperature"
-    },
-    {
-      "question": "Nghị định 13/2023/NĐ-CP có hiệu lực thi hành từ ngày nào?",
-      "worst_metric": "faithfulness",
-      "score": 0.0,
-      "diagnosis": "LLM hallucinating",
-      "suggested_fix": "Tighten prompt, lower temperature"
-    },
-    {
       "question": "Dữ liệu cá nhân nhạy cảm là gì theo Nghị định 13/2023?",
       "worst_metric": "faithfulness",
-      "score": 0.0,
+      "score": 0.4393939393939394,
       "diagnosis": "LLM hallucinating",
       "suggested_fix": "Tighten prompt, lower temperature"
     },
     {
-      "question": "Chủ thể dữ liệu có những quyền gì theo Điều 9 Nghị định 13/2023?",
+      "question": "Doanh thu hàng hóa, dịch vụ bán ra chịu thuế suất 10% là bao nhiêu?",
       "worst_metric": "faithfulness",
-      "score": 0.0,
+      "score": 0.6,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Thuế GTGT còn được khấu trừ từ kỳ trước chuyển sang là bao nhiêu?",
+      "worst_metric": "answer_relevancy",
+      "score": 0.7142857142857143,
+      "diagnosis": "Answer doesn't match question",
+      "suggested_fix": "Improve prompt template"
+    },
+    {
+      "question": "Sự đồng ý của chủ thể dữ liệu có hiệu lực khi nào?",
+      "worst_metric": "faithfulness",
+      "score": 0.64,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Tổng thuế GTGT của hàng hóa, dịch vụ mua vào trong kỳ là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.75,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Bên Kiểm soát dữ liệu cá nhân phải thông báo vi phạm cho Bộ Công an trong bao lâu?",
+      "worst_metric": "faithfulness",
+      "score": 0.7272727272727273,
       "diagnosis": "LLM hallucinating",
       "suggested_fix": "Tighten prompt, lower temperature"
     }
