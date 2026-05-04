@@ -22,3 +22,4 @@ def test_failure_has_diagnosis():
     f = failure_analysis(results, bottom_n=1)
     if f:
         assert "diagnosis" in f[0] and "suggested_fix" in f[0]
+
