@@ -114,13 +114,6 @@ Answer: number only"""
 
 def benchmark_reranker(reranker, query: str, documents: list[dict], n_runs: int = 5) -> dict:
     """Benchmark latency over n_runs."""
-    # TODO: Implement benchmark
-    # 1. times = []
-    # 2. for _ in range(n_runs):
-    #      start = time.perf_counter()
-    #      reranker.rerank(query, documents)
-    #      times.append((time.perf_counter() - start) * 1000)  # ms
-    # 3. return {"avg_ms": mean(times), "min_ms": min(times), "max_ms": max(times)}
     times = []
     for _ in range(n_runs):
         start = time.perf_counter()

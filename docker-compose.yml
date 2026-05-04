@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant_local
+    ports:
+      - "6333:6333" # REST API (Client Python giao tiếp qua đây)
+      - "6334:6334" # gRPC (Dùng cho production/tốc độ cao)
+    volumes:
+      - ./qdrant_storage:/qdrant/storage:z # Lưu trữ dữ liệu lâu dài
+    restart: unless-stopped # Tự động khởi động lại nếu bị lỗi hoặc khởi động lại máy
