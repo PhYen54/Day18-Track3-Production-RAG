@@ -12,11 +12,54 @@ from src.m5_enrichment import enrich_chunks
 from config import RERANK_TOP_K
 
 
-def build_pipeline():
+def _llm_prepend_context(chunks: list[dict]) -> list[dict]:
+    """
+    Use LLM to prepend contextual headers to each chunk before embedding.
+    Improves retrieval by making chunk content clearer for embedding models.
+    """
+    try:
+        from openai import OpenAI
+        client = OpenAI()
+    except ImportError:
+        print("  ⚠️  OpenAI not available — skipping LLM prepend")
+        return chunks
+
+    result = []
+    for chunk in chunks:
+        text = chunk.get("text", "")
+        metadata = chunk.get("metadata", {})
+        
+        try:
+            # Ask LLM to create a concise contextual header
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Viết 1 dòng header ngắn (tối đa 15 từ) mô tả đoạn văn này. "
+                        "Header phải giúp LLM embedding hiểu chunk nói về chủ đề gì. "
+                        "Ví dụ: 'Chính sách nghỉ phép hàng năm' hoặc 'Quy trình đăng ký tài khoản'",
+                    },
+                    {"role": "user", "content": text},
+                ],
+                max_tokens=50,
+            )
+            header = resp.choices[0].message.content.strip()
+            # Prepend header to chunk
+            enriched_text = f"[{header}]\n\n{text}"
+            result.append({"text": enriched_text, "metadata": metadata})
+        except Exception as e:
+            print(f"  LLM error on chunk: {str(e)[:50]} — using original")
+            result.append(chunk)
+
+    return result
+
+
+def build_rag_pipeline():
     """Build production RAG pipeline."""
     print("=" * 60)
     print("PRODUCTION RAG PIPELINE")
-    print("=" * 60)
+    print("=" * 60) 
 
     # Step 1: Load & Chunk (M1)
     print("\n[1/3] Chunking documents...")
@@ -38,6 +81,11 @@ def build_pipeline():
     else:
         print("  ⚠️  M5 not implemented — using raw chunks (fallback)")
 
+    # Step 2.5: LLM Contextual Prepend (before embedding)
+    print("\n[2.5/4] LLM prepending context for each chunk...")
+    all_chunks = _llm_prepend_context(all_chunks)
+    print(f"  Context prepended to {len(all_chunks)} chunks")
+
     # Step 3: Index (M2)
     print("\n[3/4] Indexing (BM25 + Dense)...")
     search = HybridSearch()
@@ -58,14 +106,14 @@ def run_query(query: str, search: HybridSearch, reranker: CrossEncoderReranker) 
     contexts = [r.text for r in reranked] if reranked else [r.text for r in results[:3]]
 
     # TODO (nhóm): Replace with LLM generation for better scores
-    # from openai import OpenAI
-    # client = OpenAI()
-    # context_str = "\n\n".join(contexts)
-    # resp = client.chat.completions.create(model="gpt-4o-mini", messages=[
-    #     {"role": "system", "content": "Trả lời CHỈ dựa trên context. Nếu không có → nói 'Không tìm thấy.'"},
-    #     {"role": "user", "content": f"Context:\n{context_str}\n\nCâu hỏi: {query}"},
-    # ])
-    # answer = resp.choices[0].message.content
+    from openai import OpenAI
+    client = OpenAI()
+    context_str = "\n\n".join(contexts)
+    resp = client.chat.completions.create(model="gpt-4o-mini", messages=[
+        {"role": "system", "content": "Trả lời CHỈ dựa trên context. Nếu không có → nói 'Không tìm thấy.'"},
+        {"role": "user", "content": f"Context:\n{context_str}\n\nCâu hỏi: {query}"},
+    ])
+    answer = resp.choices[0].message.content
     answer = contexts[0] if contexts else "Không tìm thấy thông tin."
     return answer, contexts
 
@@ -101,6 +149,6 @@ def evaluate_pipeline(search: HybridSearch, reranker: CrossEncoderReranker):
 
 if __name__ == "__main__":
     start = time.time()
-    search, reranker = build_pipeline()
+    search, reranker = build_rag_pipeline()
     evaluate_pipeline(search, reranker)
     print(f"\nTotal: {time.time() - start:.1f}s")
